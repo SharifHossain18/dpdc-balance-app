@@ -133,14 +133,20 @@ document.addEventListener('DOMContentLoaded', () => {
             locCoords.textContent = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
+                const LOCATION_IQ_KEY = "pk.b7ea6d09c816f9a9a1f46b5c11c9c93d";
+                const response = await fetch(`https://us1.locationiq.com/v1/reverse?key=${LOCATION_IQ_KEY}&lat=${lat}&lon=${lon}&format=json`);
+                
+                if (!response.ok) {
+                    throw new Error("API Limit Reached or Invalid Key");
+                }
+                
                 const data = await response.json();
                 
                 let address = data.display_name;
                 // Make it shorter if it's too long
                 const parts = address.split(', ');
-                if (parts.length > 3) {
-                    address = parts.slice(0, 3).join(', ');
+                if (parts.length > 4) {
+                    address = parts.slice(0, 4).join(', ');
                 }
                 
                 locAddress.textContent = address;
