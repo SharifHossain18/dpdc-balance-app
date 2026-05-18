@@ -25,6 +25,22 @@
                 <!-- Meter cards will be dynamically injected here by app.js -->
             </div>
             
+            <div id="location-card" class="balance-card glass location-card">
+                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <p class="card-label">Current Location</p>
+                    <div class="status-badge active" id="loc-status-badge">
+                        <span class="pulse" id="loc-pulse"></span>
+                        <span id="loc-status-text">Locating</span>
+                    </div>
+                </div>
+                
+                <div class="location-details">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <h3 id="location-address">Finding your location...</h3>
+                    <p id="location-coords" style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.5rem;"></p>
+                </div>
+            </div>
+            
             <button class="refresh-btn" id="refresh-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                 Refresh All

@@ -35,6 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.remove('loading');
             }, 500); // Small delay for visual feedback
         }
+        
+        // Also fetch location when refreshing
+        fetchLocation();
     }
 
     function updateUI(dataArray, isCached = false) {
@@ -105,6 +108,72 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     refreshBtn.addEventListener('click', fetchBalance);
+
+    function fetchLocation() {
+        const locAddress = document.getElementById('location-address');
+        const locCoords = document.getElementById('location-coords');
+        const locBadge = document.getElementById('loc-status-badge');
+        const locStatusText = document.getElementById('loc-status-text');
+        
+        if (!navigator.geolocation) {
+            locAddress.textContent = "Geolocation is not supported by your browser";
+            locBadge.className = 'status-badge offline';
+            locStatusText.textContent = 'Error';
+            return;
+        }
+
+        locAddress.textContent = "Locating...";
+        locBadge.className = 'status-badge active';
+        locStatusText.textContent = 'Locating';
+        
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            locCoords.textContent = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+            
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
+                const data = await response.json();
+                
+                let address = data.display_name;
+                // Make it shorter if it's too long
+                const parts = address.split(', ');
+                if (parts.length > 3) {
+                    address = parts.slice(0, 3).join(', ');
+                }
+                
+                locAddress.textContent = address;
+                locBadge.className = 'status-badge active';
+                locStatusText.textContent = 'Active';
+                
+            } catch (error) {
+                console.error("Error fetching address:", error);
+                locAddress.textContent = "Location found (Address lookup failed)";
+                locBadge.className = 'status-badge offline';
+                locStatusText.textContent = 'Offline';
+            }
+            
+        }, (error) => {
+            console.error("Geolocation error:", error);
+            locBadge.className = 'status-badge offline';
+            locStatusText.textContent = 'Denied';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    locAddress.textContent = "Location permission denied.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    locAddress.textContent = "Location information unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    locAddress.textContent = "Location request timed out.";
+                    break;
+                default:
+                    locAddress.textContent = "An unknown location error occurred.";
+                    break;
+            }
+        });
+    }
 
     // Initial fetch
     fetchBalance();
