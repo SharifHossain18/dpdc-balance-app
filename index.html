@@ -2,18 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPDC Smart Balance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Matrix Dashboard</title>
+    
+    <!-- Meta tags for SEO & PWA -->
+    <meta name="description" content="Personal Matrix Dashboard for real-time tracking">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a1a2e">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="icon-192.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="app-container">
-        <header>
-            <h1>DPDC Energy</h1>
+        <header class="glass header">
+            <h1>Matrix</h1>
             <div class="status-badge" id="status-badge">
                 <span class="pulse"></span>
                 <span id="status-text">Checking</span>
@@ -25,19 +32,57 @@
                 <!-- Meter cards will be dynamically injected here by app.js -->
             </div>
             
-            <div id="location-card" class="balance-card glass location-card">
-                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <p class="card-label">Current Location</p>
-                    <div class="status-badge active" id="loc-status-badge">
-                        <span class="pulse" id="loc-pulse"></span>
-                        <span id="loc-status-text">Locating</span>
+            <div class="dashboard-grid">
+                <!-- Weather Card -->
+                <div id="weather-card" class="balance-card glass weather-card">
+                    <p class="card-label">Current Weather</p>
+                    <div class="weather-details" style="display:flex; justify-content:space-between; align-items:center; margin-top: 1rem;">
+                        <div>
+                            <h2 id="weather-temp" style="font-size: 2rem;">--°C</h2>
+                            <p id="weather-desc" style="color: var(--text-secondary); margin-top:0.2rem;">Loading...</p>
+                        </div>
+                        <div id="weather-icon" style="font-size: 2.5rem;">⛅</div>
                     </div>
                 </div>
-                
-                <div class="location-details">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    <h3 id="location-address">Finding your location...</h3>
-                    <p id="location-coords" style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.5rem;"></p>
+
+                <!-- Location Card -->
+                <div id="location-card" class="balance-card glass location-card">
+                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <p class="card-label">Current Location</p>
+                        <div class="status-badge active" id="loc-status-badge">
+                            <span class="pulse" id="loc-pulse"></span>
+                            <span id="loc-status-text">Locating</span>
+                        </div>
+                    </div>
+                    
+                    <div class="location-details">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <h3 id="location-address">Finding your location...</h3>
+                        <p id="location-coords" style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.5rem;"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prayer Times Card -->
+            <div id="prayer-card" class="balance-card glass prayer-card" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <p class="card-label">Prayer Times</p>
+                    <span id="hijri-date" style="font-size: 0.8rem; color: var(--accent);"></span>
+                </div>
+                <div class="prayer-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; text-align: center;">
+                    <div><p style="font-size:0.7rem; color:var(--text-secondary)">Fajr</p><p id="pt-fajr" style="font-weight:600; font-size:0.9rem">--:--</p></div>
+                    <div><p style="font-size:0.7rem; color:var(--text-secondary)">Dhuhr</p><p id="pt-dhuhr" style="font-weight:600; font-size:0.9rem">--:--</p></div>
+                    <div><p style="font-size:0.7rem; color:var(--text-secondary)">Asr</p><p id="pt-asr" style="font-weight:600; font-size:0.9rem">--:--</p></div>
+                    <div><p style="font-size:0.7rem; color:var(--text-secondary)">Maghrib</p><p id="pt-maghrib" style="font-weight:600; font-size:0.9rem">--:--</p></div>
+                    <div><p style="font-size:0.7rem; color:var(--text-secondary)">Isha</p><p id="pt-isha" style="font-weight:600; font-size:0.9rem">--:--</p></div>
+                </div>
+            </div>
+            
+            <!-- History Chart Card -->
+            <div id="chart-card" class="balance-card glass chart-card" style="margin-bottom: 1.5rem; padding-bottom: 1rem;">
+                <p class="card-label" style="margin-bottom: 1rem;">Balance History</p>
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="historyChart"></canvas>
                 </div>
             </div>
             

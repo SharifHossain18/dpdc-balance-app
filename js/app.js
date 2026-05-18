@@ -36,8 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 500); // Small delay for visual feedback
         }
         
-        // Also fetch location when refreshing
+        // Also fetch location and history when refreshing
         fetchLocation();
+        fetchHistory();
     }
 
     function updateUI(dataArray, isCached = false) {
@@ -160,6 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 locStatusText.textContent = 'Offline';
             }
             
+            // Trigger weather and prayers with new coordinates
+            fetchWeather(lat, lon);
+            fetchPrayers(lat, lon);
+            
         }, (error) => {
             console.error("Geolocation error:", error);
             locBadge.className = 'status-badge offline';
@@ -179,6 +184,158 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
             }
         });
+    }
+
+    async function fetchWeather(lat, lon) {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+            const data = await res.json();
+            const temp = data.current_weather.temperature;
+            const code = data.current_weather.weathercode;
+            
+            document.getElementById('weather-temp').textContent = `${temp}°C`;
+            
+            // Simple mapping for weather codes
+            let icon = "⛅";
+            let desc = "Partly Cloudy";
+            if (code === 0) { icon = "☀️"; desc = "Clear Sky"; }
+            else if (code <= 3) { icon = "⛅"; desc = "Cloudy"; }
+            else if (code <= 48) { icon = "🌫️"; desc = "Foggy"; }
+            else if (code <= 67) { icon = "🌧️"; desc = "Rain"; }
+            else if (code <= 77) { icon = "❄️"; desc = "Snow"; }
+            else if (code >= 80) { icon = "⛈️"; desc = "Thunderstorm"; }
+            
+            document.getElementById('weather-icon').textContent = icon;
+            document.getElementById('weather-desc').textContent = desc;
+        } catch (e) {
+            console.error("Weather error:", e);
+            document.getElementById('weather-desc').textContent = "Failed to load";
+        }
+    }
+
+    async function fetchPrayers(lat, lon) {
+        try {
+            const dateStr = new Date().getDate() + '-' + (new Date().getMonth() + 1) + '-' + new Date().getFullYear();
+            const res = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=1`);
+            const data = await res.json();
+            
+            const timings = data.data.timings;
+            document.getElementById('pt-fajr').textContent = timings.Fajr;
+            document.getElementById('pt-dhuhr').textContent = timings.Dhuhr;
+            document.getElementById('pt-asr').textContent = timings.Asr;
+            document.getElementById('pt-maghrib').textContent = timings.Maghrib;
+            document.getElementById('pt-isha').textContent = timings.Isha;
+            
+            document.getElementById('hijri-date').textContent = data.data.date.hijri.date;
+        } catch (e) {
+            console.error("Prayer time error:", e);
+        }
+    }
+
+    let historyChartInstance = null;
+    async function fetchHistory() {
+        try {
+            const res = await fetch('api/history.json?t=' + new Date().getTime());
+            if (!res.ok) return;
+            const data = await res.json();
+            
+            const meters = Object.keys(data);
+            if (meters.length === 0) return;
+            
+            // Prepare datasets for Chart.js
+            const datasets = [];
+            const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+            
+            let labels = [];
+            let maxLen = 0;
+            let longestMeter = "";
+            
+            // Find longest array for labels
+            meters.forEach(meter => {
+                if (data[meter].length > maxLen) {
+                    maxLen = data[meter].length;
+                    longestMeter = meter;
+                }
+            });
+            
+            if (longestMeter) {
+                labels = data[longestMeter].map(item => item.time.split(',')[1].trim()); // just time
+            }
+            
+            meters.forEach((meter, index) => {
+                datasets.push({
+                    label: `Meter ${meter}`,
+                    data: data[meter].map(item => item.balance),
+                    borderColor: colors[index % colors.length],
+                    tension: 0.4,
+                    pointRadius: 3,
+                    borderWidth: 2,
+                    fill: false
+                });
+            });
+            
+            const ctx = document.getElementById('historyChart').getContext('2d');
+            
+            if (historyChartInstance) {
+                historyChartInstance.destroy();
+            }
+            
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = 'Inter';
+            
+            historyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e2e8f0',
+                                usePointStyle: true,
+                                boxWidth: 6
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#cbd5e1',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)',
+                                drawBorder: false,
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '৳' + value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+        } catch (e) {
+            console.error("History chart error:", e);
+        }
     }
 
     // Initial fetch

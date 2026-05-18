@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dpdc-balance-v6';
+const CACHE_NAME = 'dpdc-balance-v7';
 const urlsToCache = [
     './',
     './index.html',

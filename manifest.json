@@ -1,8 +1,8 @@
 {
-    "name": "DPDC Smart Balance",
-    "short_name": "DPDC Balance",
-    "description": "Check your DPDC Prepaid Meter Balance automatically.",
-    "start_url": "./index.html",
+    "name": "Matrix Dashboard",
+    "short_name": "Matrix",
+    "description": "Personal Matrix Dashboard",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#0f172a",
     "theme_color": "#1a1a2e",

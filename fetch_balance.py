@@ -38,7 +38,35 @@ def fetch_balance():
     with open('api/balance.json', 'w') as f:
         json.dump(all_data, f, indent=4)
         
-    print("Successfully updated api/balance.json")
+    # Handle history
+    history_file = 'api/history.json'
+    history_data = {}
+    if os.path.exists(history_file):
+        try:
+            with open(history_file, 'r') as f:
+                history_data = json.load(f)
+        except:
+            pass
+            
+    for item in all_data:
+        meter = item["meterNumber"]
+        if meter not in history_data:
+            history_data[meter] = []
+        
+        # Append new reading
+        history_data[meter].append({
+            "time": datetime.now().strftime("%b %d, %H:%M"),
+            "balance": item["balanceRemaining"]
+        })
+        
+        # Keep only the last 48 readings (48 hours if run hourly)
+        if len(history_data[meter]) > 48:
+            history_data[meter] = history_data[meter][-48:]
+            
+    with open(history_file, 'w') as f:
+        json.dump(history_data, f, indent=4)
+        
+    print("Successfully updated api/balance.json and api/history.json")
     print(json.dumps(all_data, indent=2))
 
 if __name__ == "__main__":
